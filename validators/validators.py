@@ -6,7 +6,7 @@ import os
 
 load_dotenv()
 
-ADMIN_IDS = os.getenv("ADMIN_IDS")
+ADMIN_IDS = os.getenv("ADMIN_IDS").split(",")
 
 
 def contains_bad_symbols(text: str) -> bool:
