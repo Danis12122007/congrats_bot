@@ -1,0 +1,1 @@
+UPDATE users SET subscription = false WHERE id = 1943303658;
