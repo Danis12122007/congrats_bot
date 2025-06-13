@@ -1,5 +1,12 @@
 import datetime
 import re
+from dotenv import load_dotenv
+import os
+
+
+load_dotenv()
+
+ADMIN_IDS = os.getenv("ADMIN_IDS")
 
 
 def contains_bad_symbols(text: str) -> bool:
@@ -26,8 +33,7 @@ def is_valid_date(date_str: str) -> bool:
 
 
 def user_is_admin(user_id: int) -> bool:
-    admins = ['1943303658']
-    if str(user_id) in admins:
+    if str(user_id) in ADMIN_IDS:
         return True
     else:
         return False
