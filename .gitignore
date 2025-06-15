@@ -1,1 +1,22 @@
--e ".env\n.venv/\n__pycache__/" 
+# Игнорировать все .log файлы
+*.log
+
+# Игнорировать папку venv
+.venv/
+
+# Игнорировать .env файл с конфиденциальными данными
+.env
+
+# Игнорировать временные файлы редакторов
+*.swp
+.DS_Store
+
+*/__pycache__/
+__pycache__/
+*.py[cod]
+
+
+admin/
+pgAdmin_scripts/
+
+setup.cfg
