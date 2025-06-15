@@ -272,6 +272,34 @@ def check_sub_expired(cur, user_id: int) -> bool:
         return False
 
 
+@db_operation
+def get_gens_by_date_range(cur, date_start, date_end):
+    cur.execute(
+        """
+        SELECT DATE(created_at), COUNT(*)
+        FROM generations
+        WHERE created_at BETWEEN %s AND %s
+        GROUP BY DATE(created_at)
+        ORDER BY DATE(created_at)
+        """, (date_start, date_end))
+    result = cur.fetchall()
+    return result
+
+
+@db_operation
+def get_users_by_date_range(cur, date_start, date_end):
+    cur.execute(
+        """
+        SELECT DATE(created_at), COUNT(DISTINCT user_id)
+        FROM generations
+        WHERE created_at BETWEEN %s AND %s
+        GROUP BY DATE(created_at)
+        ORDER BY DATE(created_at)
+        """, (date_start, date_end))
+    result = cur.fetchall()
+    return result
+
+
 if __name__ == '__main__':
     connect_db()
     get_info(1943303658)

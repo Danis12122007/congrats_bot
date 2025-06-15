@@ -4,7 +4,7 @@ from aiogram.filters import CommandStart, Command
 from keyboards import inline
 from aiogram.fsm.context import FSMContext
 from bot_states import form_states
-from services import data_base, AI_API
+from services import data_base, AI_API, graphs
 import datetime
 from validators import validators
 
@@ -293,6 +293,51 @@ async def recipient_name(message: types.Message, state: FSMContext):
             f"Количество пользователей произведших генерацию: {monthly_info['users_gen_count']}\n"
             f"Количество новых пользователей: {monthly_info['newcomers_count']}\n"
         ))
+    elif message.text.startswith("/graph_gens") and validators.user_is_admin(message.from_user.id):
+        user_id = message.from_user.id
+        print(f"{user_id}:{str(message.text)[1:]}")
+        await state.clear()
+
+        date_range = str(message.text).split()[1].split("=")
+
+        start = datetime.date(
+            int(date_range[0].split("-")[0]),
+            int(date_range[0].split("-")[1]),
+            int(date_range[0].split("-")[2])
+            )
+        end = datetime.date(
+            int(date_range[1].split("-")[0]),
+            int(date_range[1].split("-")[1]),
+            int(date_range[1].split("-")[2])
+            )
+
+        graph = graphs.get_gens_graph(start, end)
+
+        await message.answer(f"```\n{graph}\n```", parse_mode="Markdown")
+        print(graph)
+
+    elif message.text.startswith("/graph_users") and validators.user_is_admin(message.from_user.id):
+        user_id = message.from_user.id
+        print(f"{user_id}:{str(message.text)[1:]}")
+        await state.clear()
+
+        date_range = str(message.text).split()[1].split("=")
+
+        start = datetime.date(
+            int(date_range[0].split("-")[0]),
+            int(date_range[0].split("-")[1]),
+            int(date_range[0].split("-")[2])
+            )
+        end = datetime.date(
+            int(date_range[1].split("-")[0]),
+            int(date_range[1].split("-")[1]),
+            int(date_range[1].split("-")[2])
+            )
+
+        graph = graphs.get_users_graph(start, end)
+
+        await message.answer(f"```\n{graph}\n```", parse_mode="Markdown")
+        print(graph)
     else:
         await state.clear()
         await message.answer("Сообщение вне контекста")
