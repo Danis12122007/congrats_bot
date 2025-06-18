@@ -7,6 +7,10 @@ from bot_states import form_states
 from services import data_base, AI_API, promotions, graphs
 import datetime
 from validators import validators
+from services import logging
+
+
+log_action = logging.log_action
 
 
 TARIFFS = {
@@ -75,8 +79,8 @@ router = Router()
 
 @router.message(CommandStart())
 async def cmd_start(message: types.Message):
-    print(message.from_user.full_name)
     user_id = message.from_user.id
+    log_action(user_id, "/start")
     data_base.reg_user(user_id)
 
     await message.answer(
@@ -93,6 +97,7 @@ async def generate_congrat(message: types.Message, state: FSMContext):
     print(f"{message.from_user.id}: generate_congrat")
     await state.clear()
     user_id = message.from_user.id
+    log_action(user_id, "/generate_congrat")
     data_base.reg_user(user_id)
 
     sub_data = check_sub(user_id)
@@ -118,6 +123,7 @@ async def generate_congrat(message: types.Message, state: FSMContext):
 async def info(message: types.Message, state: FSMContext):
     await state.clear()
     user_id = message.from_user.id
+    log_action(user_id, "/information")
     data_base.reg_user(user_id)
 
     info = data_base.get_info(user_id)
@@ -141,6 +147,7 @@ async def info(message: types.Message, state: FSMContext):
 
 @router.message(Command("subscription"))
 async def subscription(message: types.Message, state: FSMContext):
+    log_action(message.from_user.id, "/subscription")
     await message.answer("""
 🎉 Хочешь больше поздравлений? Подпишись и получи доступ к генерациям без лишних ограничений:
 
@@ -168,6 +175,7 @@ async def subscription(message: types.Message, state: FSMContext):
 async def promocode(message: types.Message, state: FSMContext):
     await state.clear()
     user_id = message.from_user.id
+    log_action(user_id, "/promocode")
     data_base.reg_user(user_id)
     await state.set_state(form_states.Congrat.promocode)
     await message.answer("Введите промокод")
@@ -177,6 +185,7 @@ async def promocode(message: types.Message, state: FSMContext):
 async def awake_inactive_users(message: types.Message):
     if not validators.user_is_admin(message.from_user.id):
         return
+    log_action(message.from_user.id, "/awake")
     users = data_base.get_inactive_users()
     text = "🎉 Привет! Ты давно не заходил. Пора бы сгенерировать поздравление 😉"
     await promotions.broadcast_message(message.bot, users, text, inline.generate_congrat_btn)
@@ -210,11 +219,13 @@ async def recipient_name(message: types.Message, state: FSMContext):
             await message.answer("Превышена частота генераций. Повторите позже")
             return
         answer_generation = await message.answer("Генерация...")
+        log_action(user_id, f"Выбрал получателя: {message.text}")
         await state.update_data(reciever_name=message.text)
         congrat_data = await state.get_data()
         print(f"{message.from_user.id}: {congrat_data}")
         result = AI_API.generate_congrat(congrat_data)
         if result["status"] == "error":
+            log_action(user_id, f"Ошибка при генерации: {result['error']}")
             await answer_generation.edit_text(
                 "Какая-то ошибка\nПопробуйте еще раз\nТокены не списаны",
                 reply_markup=inline.generate_congrat_btn()
@@ -226,6 +237,7 @@ async def recipient_name(message: types.Message, state: FSMContext):
         data_base.log_generation(user_id, prompt, response, session_id)
         data_base.write_off_a_token(user_id)
         await answer_generation.edit_text(response, reply_markup=inline.regenerate_btn(session_id))
+        log_action(user_id, f"Получил поздравление {session_id}")
         data_base.set_last_request_time(user_id)
         gen_count = data_base.send_mess_after_first_second_gen(user_id)
         if gen_count == '1':
@@ -249,6 +261,7 @@ async def recipient_name(message: types.Message, state: FSMContext):
 
     elif current_state == 'Congrat:promocode':
         promo = message.text
+        log_action(user_id, f"Ввел промокод: {promo}")
         if promo in []:
             user_id = message.from_user.id
             data_base.set_subscription(user_id, "monthly")
@@ -258,6 +271,7 @@ async def recipient_name(message: types.Message, state: FSMContext):
             await message.answer("Промокод не подходит")
             await state.clear()
     elif current_state == 'Congrat:achieve':
+        log_action(user_id, f"Ввел достижение: {message.text}")
         await state.update_data(achieve=message.text)
         await state.set_state(form_states.Congrat.congrat_recipient_role)
         await message.answer(
@@ -265,6 +279,7 @@ async def recipient_name(message: types.Message, state: FSMContext):
                             reply_markup=inline.congrat_recipient_role_btn()
         )
     elif current_state == 'Congrat:holiday':
+        log_action(user_id, f"Ввел праздник: {message.text}")
         await state.update_data(holiday=message.text)
         await state.set_state(form_states.Congrat.congrat_recipient_role)
         await message.answer(
@@ -272,6 +287,7 @@ async def recipient_name(message: types.Message, state: FSMContext):
                             reply_markup=inline.congrat_recipient_role_btn()
         )
     elif current_state == 'Congrat:anniversary':
+        log_action(user_id, f"Ввел годовщину: {message.text}")
         await state.update_data(anniversary=message.text)
         await state.set_state(form_states.Congrat.congrat_recipient_role)
         await message.answer(
@@ -373,6 +389,7 @@ async def recipient_name(message: types.Message, state: FSMContext):
         await message.answer(f"```\n{graph}\n```", parse_mode="Markdown")
         print(graph)
     else:
+        log_action(user_id, f"Сообщение вне контекста: {message.text}")
         await state.clear()
         await message.answer("Сообщение вне контекста")
         user_id = message.from_user.id

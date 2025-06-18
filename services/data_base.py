@@ -4,7 +4,10 @@ from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from functools import wraps
 import pytz
+from services import logging
 
+
+log_action = logging.log_action
 
 load_dotenv()
 
@@ -87,6 +90,7 @@ def get_info(cur, user_id: int) -> dict:
 def reg_user(cur, user_id: int) -> None:
 
     if not check_user(user_id=user_id):
+        log_action(user_id, "!!!Новый пользователь!!!")
         cur.execute("INSERT INTO users (user_id) VALUES (%s) ON CONFLICT (user_id) DO NOTHING;", (user_id,))
         conn.commit()
 

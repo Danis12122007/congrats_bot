@@ -8,6 +8,10 @@ from services import data_base, AI_API
 from dotenv import load_dotenv
 import os
 import asyncio
+from services import logging
+
+
+log_action = logging.log_action
 
 # data dicts
 events_dict = {
@@ -107,7 +111,7 @@ def check_sub(user_id: int):
 async def generate_congrat(callback: types.CallbackQuery, state: FSMContext):
     await state.clear()
     user_id = callback.from_user.id
-
+    log_action(user_id, "callback:generate_congrat")
     sub_data = check_sub(user_id)
     if not sub_data["allow_generate"]:
         await callback.message.answer(sub_data["message"], reply_markup=inline.see_sub_plans_btn())
@@ -139,6 +143,7 @@ async def generate_congrat(callback: types.CallbackQuery, state: FSMContext):
 async def generate_another(callback: types.CallbackQuery, state: FSMContext):
     await state.clear()
     user_id = callback.from_user.id
+    log_action(user_id, "callback:generate_another")
     print(f"{user_id}: generate_another")
 
     sub_data = check_sub(user_id)
@@ -168,6 +173,7 @@ async def generate_another(callback: types.CallbackQuery, state: FSMContext):
 @router.callback_query(F.data.contains("regenerate_current:"))
 async def regenerate_current(callback: types.CallbackQuery, state: FSMContext):
     user_id = callback.from_user.id
+    log_action(user_id, "callback:regenerate_current")
     print(f"{user_id}: regenerate_current")
 
     sub_data = check_sub(user_id)
@@ -189,11 +195,19 @@ async def regenerate_current(callback: types.CallbackQuery, state: FSMContext):
         answer_generation = await callback.message.edit_text("Генерация...")
         prompt = data_base.get_prompt_by_session_id(session_id)
         result = AI_API.generate_congrat(prompt=prompt, regenerate=True)
+        if result["status"] == "error":
+            log_action(user_id, f"Ошибка при генерации: {result['error']}")
+            await answer_generation.edit_text(
+                "Какая-то ошибка\nПопробуйте еще раз\nТокены не списаны",
+                reply_markup=inline.generate_congrat_btn()
+                )
+            return
         prompt = result["prompt"]
         response = result["response"]
         data_base.log_generation(callback.from_user.id, prompt, response, session_id)
         data_base.write_off_a_token(callback.from_user.id)
         await answer_generation.edit_text(response, reply_markup=inline.regenerate_btn(session_id))
+        log_action(user_id, f"Получил поздравление {session_id}")
         data_base.set_last_request_time(callback.from_user.id)
         gen_count = data_base.send_mess_after_first_second_gen(user_id)
         print(f"gen_count:{gen_count}")
@@ -229,6 +243,7 @@ async def regenerate_current(callback: types.CallbackQuery, state: FSMContext):
 }))
 async def congrat_type(callback: types.CallbackQuery, state: FSMContext):
     c_type = callback.data
+    log_action(callback.from_user.id, f"Тип поздравления: {events_dict[c_type]}")
     await state.update_data(congrat_type=c_type)
 
     await callback.message.edit_text(
@@ -283,6 +298,7 @@ async def congrat_type(callback: types.CallbackQuery, state: FSMContext):
 }))
 async def congrat_reciever_role(callback: types.CallbackQuery, state: FSMContext):
     role = callback.data
+    log_action(callback.from_user.id, f"Роль получателя: {reciever_role_dict[role]}")
 
     await state.update_data(congrat_recipient_role=role)
     await state.set_state(form_states.Congrat.congrat_style)
@@ -305,7 +321,7 @@ async def congrat_reciever_role(callback: types.CallbackQuery, state: FSMContext
 }))
 async def congrat_style(callback: types.CallbackQuery, state: FSMContext):
     style = callback.data
-
+    log_action(callback.from_user.id, f"Стиль поздравления: {style_dict[style]}")
     await state.update_data(congrat_style=style)
     await state.set_state(form_states.Congrat.reciever_name)
 
@@ -320,6 +336,7 @@ async def congrat_style(callback: types.CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == 'see_sub_plans')
 async def see_sub_plans(callback: types.CallbackQuery, state: FSMContext):
+    log_action(callback.from_user.id, "callback:see_sub_plans")
     await callback.message.answer("""
 💎 С ботом ты забудешь, что такое:
 — «Что написать?»
@@ -347,6 +364,7 @@ async def see_sub_plans(callback: types.CallbackQuery, state: FSMContext):
 async def handle_buy_subscription(callback: types.CallbackQuery):
     tariff = TARIFFS[callback.data]
     user_id = callback.from_user.id
+    log_action(user_id, "handle_buy_sub")
 
     provider_data = {
         "receipt": {
@@ -409,6 +427,7 @@ async def process_pre_checkout(pre_checkout_q: types.PreCheckoutQuery):
 async def on_successful_payment(message: types.Message):
     payload = message.successful_payment.invoice_payload
     user_id = message.from_user.id
+    log_action(user_id, f"success_payment:{payload}")
 
     # По payload узнаём, какой тариф был куплен
     for tariff in TARIFFS.values():

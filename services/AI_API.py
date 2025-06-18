@@ -108,12 +108,11 @@ def generate_congrat(data: dict | None = None, prompt: str | None = None, regene
                     f"стиль поздравления: {congrat_style[data['congrat_style']]}, "
                     f"имя получателя: {data['reciever_name']}."
                     )
-        except Exception:
+        except Exception as e:
             return {
                 "status": "error",
+                "error": e
             }
-
-    print("pass")
 
     # Сам запрос
     response = client.chat.completions.create(
