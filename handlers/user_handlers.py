@@ -4,7 +4,7 @@ from aiogram.filters import CommandStart, Command
 from keyboards import inline
 from aiogram.fsm.context import FSMContext
 from bot_states import form_states
-from services import data_base, AI_API
+from services import data_base, AI_API, promotions
 import datetime
 from validators import validators
 
@@ -80,7 +80,11 @@ async def cmd_start(message: types.Message):
     data_base.reg_user(user_id)
 
     await message.answer(
-        "Привет! Я бот, который генерирует поздравления! Просто жми на кнопку ниже!",
+        """
+👋 Привет! Я — твой личный поздравлятор.
+Напишу поздравление для мамы, подруги, начальника и даже бывшей 😎
+Первые 3 поздравления — бесплатно 🎁
+        """,
         reply_markup=inline.generate_congrat_btn())
 
 
@@ -141,14 +145,14 @@ async def subscription(message: types.Message, state: FSMContext):
 🎉 Хочешь больше поздравлений? Подпишись и получи доступ к генерациям без лишних ограничений:
 
 💡 Бесплатно:
-— 5 поздравлений в месяц
+— 3 поздравлений
 — Хорошо, чтобы попробовать
 
-💎 Базовая — 49₽ / мес:
+💎 Базовая — 99₽ / мес:
 — 100 генераций
 — Для редких поздравлений
 
-🚀 Продвинутая — 99₽ / мес:
+🚀 Продвинутая — 149₽ / мес:
 — 250 генераций
 — Для активных пользователей
 
@@ -169,8 +173,18 @@ async def promocode(message: types.Message, state: FSMContext):
     await message.answer("Введите промокод")
 
 
+@router.message(Command("awake"))
+async def awake_inactive_users(message: types.Message):
+    if not validators.user_is_admin(message.from_user.id):
+        return
+    users = data_base.get_inactive_users()
+    text = "🎉 Привет! Ты давно не заходил. Пора бы сгенерировать поздравление 😉"
+    await promotions.broadcast_message(message.bot, users, text, inline.generate_congrat_btn)
+
+
 @router.message(F.text)
 async def recipient_name(message: types.Message, state: FSMContext):
+    user_id = message.from_user.id
     message_text = message.text
     if "<script>" in message_text or any(x in message_text for x in ["<", ">", "{", "}"]):
         await message.answer("Пожалуйста, не используйте подозрительные символы.")
@@ -209,10 +223,30 @@ async def recipient_name(message: types.Message, state: FSMContext):
         prompt = result["prompt"]
         response = result["response"]
         session_id = result["session_id"]
-        data_base.log_generation(message.from_user.id, prompt, response, session_id)
-        data_base.write_off_a_token(message.from_user.id)
+        data_base.log_generation(user_id, prompt, response, session_id)
+        data_base.write_off_a_token(user_id)
         await answer_generation.edit_text(response, reply_markup=inline.regenerate_btn(session_id))
-        data_base.set_last_request_time(message.from_user.id)
+        data_base.set_last_request_time(user_id)
+        gen_count = data_base.send_mess_after_first_second_gen(user_id)
+        if gen_count == '1':
+            await message.answer(
+                """
+                🎉 Готово! Надеюсь, понравилось.\n
+                Осталось: 2 бесплатных генерации.
+                """)
+        elif gen_count == '2':
+            await message.answer(
+                """
+                🎉 Готово! Надеюсь, понравилось.
+                Осталось: 1 бесплатная генерация.
+                """)
+        elif gen_count == '3':
+            await message.answer(
+                """
+                ⛔ Больше бесплатных генераций нет.
+                Хочешь продолжить? Вот доступные варианты 👇
+                """, reply_markup=inline.sub_plans_btn())
+
     elif current_state == 'Congrat:promocode':
         promo = message.text
         if promo in []:

@@ -1,1 +1,36 @@
--e ".env\n.venv/\n__pycache__/" 
+# Python
+*/__pycache__/
+__pycache__/
+*.py[cod]
+*.pyc
+
+# Виртуальное окружение
+.venv/
+env/
+
+# Конфиденциальные файлы
+.env
+*.env
+admin/
+pgAdmin_scripts/
+graphs.py
+setup.cfg
+
+# Кэш и логи
+*.log
+.cache/
+*.DS_Store
+Thumbs.db
+
+# Редакторы
+.vscode/
+.idea/
+
+# Тесты
+.pytest_cache/
+.coverage
+
+# Сборка
+build/
+dist/
+*.egg-info/
