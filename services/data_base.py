@@ -280,6 +280,7 @@ def get_users_by_date_range(cur, date_start, date_end):
     result = cur.fetchall()
     return result
 
+
 def get_inactive_users(cur):
     cur.execute(
         """

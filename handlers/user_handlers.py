@@ -4,7 +4,7 @@ from aiogram.filters import CommandStart, Command
 from keyboards import inline
 from aiogram.fsm.context import FSMContext
 from bot_states import form_states
-from services import data_base, AI_API
+from services import data_base, AI_API, promotions, graphs
 import datetime
 from validators import validators
 
