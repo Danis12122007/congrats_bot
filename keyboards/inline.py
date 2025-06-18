@@ -15,10 +15,10 @@ def sub_plans_btn():
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(
-                text="💎 49₽ / мес (100)",
+                text="💎 99₽ / мес (100)",
                 callback_data="buy_basic")],
             [InlineKeyboardButton(
-                text="🚀 99₽ / мес (250)",
+                text="🚀 149₽ / мес (250)",
                 callback_data="buy_pro")],
             [InlineKeyboardButton(
                 text="👑 249₽ / год (750)",

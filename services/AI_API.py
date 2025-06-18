@@ -113,6 +113,8 @@ def generate_congrat(data: dict | None = None, prompt: str | None = None, regene
                 "status": "error",
             }
 
+    print("pass")
+
     # Сам запрос
     response = client.chat.completions.create(
         model="openai/gpt-3.5-turbo",  # можно заменить на другую модель
@@ -138,9 +140,10 @@ def generate_congrat(data: dict | None = None, prompt: str | None = None, regene
 
 
 if __name__ == '__main__':
-    generate_congrat({
+    res = generate_congrat({
         'congrat_type': 'birthday',
         'congrat_recipient_role': 'friend_girl',
         'congrat_style': 'friendly',
         'reciever_name': 'Дарья'
         })
+    print(res)

@@ -88,9 +88,9 @@ def reg_user(cur, user_id: int) -> None:
 
     if not check_user(user_id=user_id):
         cur.execute("INSERT INTO users (user_id) VALUES (%s) ON CONFLICT (user_id) DO NOTHING;", (user_id,))
-
         conn.commit()
 
+        cancel_subscription(user_id)
         print(f'{user_id}:user_regged')
 
 
@@ -98,13 +98,12 @@ def reg_user(cur, user_id: int) -> None:
 def set_subscription(cur, user_id: int, sub_type: str, tokens: int, expired_date) -> None:
     cur.execute("""
                 UPDATE users
-                SET subscription=%s,
+                SET sub_type=%s,
                 sub_expired=%s,
-                available_tokens=%s,
-                sub_type=%s
+                available_tokens=%s
                 WHERE user_id=%s;
                 """,
-                (True, expired_date, tokens, sub_type, user_id))
+                (sub_type, expired_date, tokens, user_id))
     conn.commit()
 
 
@@ -114,10 +113,10 @@ def cancel_subscription(cur, user_id: int) -> None:
                 UPDATE users
                 SET available_tokens=%s,
                 sub_type=%s,
-                sub_expired=NOW() + INTERVAL '1 month'
+                sub_expired=NOW() + INTERVAL '10 years'
                 WHERE user_id=%s;
                 """,
-                (5, "free_sub", user_id))
+                (3, "free_sub", user_id))
     conn.commit()
 
 
@@ -206,22 +205,6 @@ def write_off_a_token(cur, user_id: int) -> None:
     conn.commit()
 
 
-'''
-@db_operation
-def sub_request(cur, user_id: int, sub_type: str) -> None:
-    cur.execute("SELECT * FROM sub_request WHERE user_id=%s;", (user_id,))
-    users = cur.fetchall()
-    if not users:
-        print("new")
-        cur.execute("INSERT INTO sub_request (user_id, sub_type) VALUES (%s, %s);", (user_id, sub_type))
-        conn.commit()
-    else:
-        print("change")
-        cur.execute("UPDATE sub_request SET sub_type=%s WHERE user_id=%s;", (sub_type, user_id))
-        conn.commit()
-'''
-
-
 @db_operation
 def get_prompt_by_session_id(cur, session_id: str) -> str:
     cur.execute("SELECT prompt FROM generations WHERE session_id=%s;", (session_id,))
@@ -241,14 +224,12 @@ def get_permition_by_last_request_time(cur, user_id) -> dict:
     five_sec_ago = datetime.now(moscow_tz) - timedelta(seconds=5)
     cur.execute("SELECT last_request_time FROM users WHERE user_id=%s;", (user_id,))
     last_request_time = cur.fetchone()
-    print(five_sec_ago)
 
     if not last_request_time:
         return {
             "status": "allowed"
         }
     last_request_time = last_request_time[0]
-    print(last_request_time)
     if last_request_time > five_sec_ago:
         return {
             "status": "not allowed",
@@ -299,8 +280,49 @@ def get_users_by_date_range(cur, date_start, date_end):
     result = cur.fetchall()
     return result
 
+def get_inactive_users(cur):
+    cur.execute(
+        """
+        SELECT user_id
+        FROM users
+        WHERE last_request_time < NOW() - INTERVAL '1 day'
+        """)
+    data = cur.fetchall()
+    return data
+
+
+@db_operation
+def send_mess_after_first_second_gen(cur, user_id):
+    cur.execute(
+        """
+        SELECT sub_type
+        FROM users
+        WHERE user_id=%s
+        """, (user_id,))
+    sub_type = cur.fetchone()[0]
+
+    cur.execute(
+        """
+        SELECT COUNT(*)
+        FROM generations
+        WHERE user_id=%s
+        """, (user_id,))
+    count = cur.fetchone()[0]
+
+    if sub_type == 'free_sub':
+        print(f"{user_id}:generations:{count}")
+        if count == 1:
+            return '1'
+        elif count == 2:
+            return '2'
+        elif count == 3:
+            return '3'
+        else:
+            return None
+    else:
+        return None
+
 
 if __name__ == '__main__':
     connect_db()
-    get_info(1943303658)
     close_db()

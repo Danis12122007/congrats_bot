@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+import json
 from aiogram import Router, types, F
 from keyboards import inline
 from aiogram.fsm.context import FSMContext
@@ -48,7 +49,7 @@ TARIFFS = {
     "buy_basic": {
         "label": "💎 Базовая подписка",
         "description": "100 генераций на 30 дней.",
-        "amount": 4900,  # копеек = 49₽
+        "amount": 9900,  # копеек = 49₽
         "days": 30,
         "tokens": 100,
         "payload": "basic_sub",
@@ -56,7 +57,7 @@ TARIFFS = {
     "buy_pro": {
         "label": "🚀 Продвинутая подписка",
         "description": "250 генераций на 30 дней.",
-        "amount": 9900,  # 99₽
+        "amount": 14900,  # 99₽
         "days": 30,
         "tokens": 250,
         "payload": "pro_sub",
@@ -194,6 +195,26 @@ async def regenerate_current(callback: types.CallbackQuery, state: FSMContext):
         data_base.write_off_a_token(callback.from_user.id)
         await answer_generation.edit_text(response, reply_markup=inline.regenerate_btn(session_id))
         data_base.set_last_request_time(callback.from_user.id)
+        gen_count = data_base.send_mess_after_first_second_gen(user_id)
+        print(f"gen_count:{gen_count}")
+        if gen_count == '1':
+            await callback.message.answer(
+                """
+                🎉 Готово! Надеюсь, понравилось.\n
+                Осталось: 2 бесплатных генерации.
+                """)
+        elif gen_count == '2':
+            await callback.message.answer(
+                """
+                🎉 Готово! Надеюсь, понравилось.
+                Осталось: 1 бесплатная генерация.
+                """)
+        elif gen_count == '3':
+            await callback.message.answer(
+                """
+                ⛔ Больше бесплатных генераций нет.
+                Хочешь продолжить? Вот доступные варианты 👇
+                """, reply_markup=inline.sub_plans_btn())
 
     await callback.answer()
 
@@ -300,23 +321,21 @@ async def congrat_style(callback: types.CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == 'see_sub_plans')
 async def see_sub_plans(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.answer("""
-🎉 Хочешь больше поздравлений? Подпишись и получи доступ к генерациям без лишних ограничений:
+💎 С ботом ты забудешь, что такое:
+— «Что написать?»
+— «Как не звучать банально?»
+— «Опять открытка из магазина? 😅»
 
-💡 Бесплатно:
-— 5 поздравлений в месяц
-— Хорошо, чтобы попробовать
+🎁 Выбирай подписку:
 
-💎 Базовая — 49₽ / мес:
-— 100 генераций
-— Для редких поздравлений
+💎 Базовая — 99₽ → 100 генераций/месяц
 
-🚀 Продвинутая — 99₽ / мес:
-— 250 генераций
-— Для активных пользователей
+🚀 Продвинутая — 149₽ → 250 генераций/месяц
 
-👑 Годовая — 249₽ / год:
-— 750 генераций на весь год
-— Максимальная выгода!
+👑 Годовая — 249₽ → 750 генераций/год
+
+📌 Средняя генерация стоит меньше 0.2₽
+📦 Один раз оплатил — поздравляешь весь оплаченый период.
 
 Подписка активируется сразу. Генерации не сгорают до конца срока.
 """, reply_markup=inline.sub_plans_btn())
@@ -328,6 +347,25 @@ async def see_sub_plans(callback: types.CallbackQuery, state: FSMContext):
 async def handle_buy_subscription(callback: types.CallbackQuery):
     tariff = TARIFFS[callback.data]
     user_id = callback.from_user.id
+
+    provider_data = {
+        "receipt": {
+            "items": [
+                {
+                    "description": tariff["label"],
+                    "quantity": 1,
+                    "amount": {
+                        "value": tariff["amount"] / 100,  # в рублях
+                        "currency": "RUB"
+                    },
+                    "vat_code": 1,
+                    "payment_mode": "full_payment",
+                    "payment_subject": "commodity"
+                }
+            ],
+            "tax_system_code": 1
+        }
+    }
 
     if data_base.get_info(user_id)["sub_type"] != "free_sub":
         additional_description = (
@@ -349,12 +387,15 @@ async def handle_buy_subscription(callback: types.CallbackQuery):
 
     await callback.message.answer_invoice(
         title=tariff["label"],
-        description=tariff["description"] + additional_description,
+        description=(tariff["description"] + additional_description)[:255],
         payload=tariff["payload"],
         provider_token=PROVIDER_TOKEN,
         currency="RUB",
         prices=prices,
-        start_parameter=callback.data
+        start_parameter=callback.data,
+        need_email=True,
+        send_email_to_provider=True,
+        provider_data=json.dumps(provider_data)
     )
     await callback.answer()
 
@@ -370,9 +411,9 @@ async def on_successful_payment(message: types.Message):
     user_id = message.from_user.id
 
     # По payload узнаём, какой тариф был куплен
-    for key, tariff in TARIFFS.items():
+    for tariff in TARIFFS.values():
         if payload == tariff["payload"]:
-            sub_expires = datetime.now(datetime.timezone.utc) + timedelta(days=tariff["days"])
+            sub_expires = datetime.now(timezone.utc) + timedelta(days=tariff["days"])
             tokens = tariff["tokens"]
 
             # 🔧 Обнови БД: выстави подписку, токены, срок
