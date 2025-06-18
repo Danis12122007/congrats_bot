@@ -7,7 +7,6 @@ load_dotenv()
 
 admins = os.getenv("ADMIN_IDS").split(",")
 admins = [int(i) for i in admins]
-admins = []
 
 # Убедимся, что файл логов существует
 if not os.path.exists("logs"):
