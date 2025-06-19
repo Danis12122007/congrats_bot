@@ -285,6 +285,7 @@ def get_users_by_date_range(cur, date_start, date_end):
     return result
 
 
+@db_operation
 def get_inactive_users(cur):
     cur.execute(
         """
