@@ -173,6 +173,7 @@ async def generate_another(callback: types.CallbackQuery, state: FSMContext):
 @router.callback_query(F.data.contains("regenerate_current:"))
 async def regenerate_current(callback: types.CallbackQuery, state: FSMContext):
     user_id = callback.from_user.id
+    user_info = data_base.get_info(user_id)
     log_action(user_id, "callback:regenerate_current")
     print(f"{user_id}: regenerate_current")
 
@@ -191,20 +192,37 @@ async def regenerate_current(callback: types.CallbackQuery, state: FSMContext):
             await generation_frequency_exceeded_message.delete()
             await callback.answer()
             return
+
         session_id = callback.data.split(":", 1)[1]
         answer_generation = await callback.message.edit_text("Генерация...")
         prompt = data_base.get_prompt_by_session_id(session_id)
-        result = AI_API.generate_congrat(prompt=prompt, regenerate=True)
-        if result["status"] == "error":
-            log_action(user_id, f"Ошибка при генерации: {result['error']}")
-            await answer_generation.edit_text(
-                "Какая-то ошибка\nПопробуйте еще раз\nТокены не списаны",
-                reply_markup=inline.generate_congrat_btn()
-                )
-            return
-        prompt = result["prompt"]
-        response = result["response"]
-        data_base.log_generation(callback.from_user.id, prompt, response, session_id)
+        if user_info["sub_type"] == "free_sub":
+            result = AI_API.generate_congrat_gpt_3_5(prompt=prompt, regenerate=True)
+            if result["status"] == "error":
+                log_action(user_id, f"Ошибка при генерации: {result['error']}")
+                await answer_generation.edit_text(
+                    "Какая-то ошибка\nПопробуйте еще раз\nТокены не списаны",
+                    reply_markup=inline.generate_congrat_btn()
+                    )
+                return
+            prompt = result["prompt"]
+            response = result["response"]
+            session_id = result["session_id"]
+            data_base.log_generation(callback.from_user.id, prompt, response, session_id, "gpt-3.5")
+        else:
+            result = AI_API.generate_congrat_gpt_4_1(prompt=prompt, regenerate=True)
+            if result["status"] == "error":
+                log_action(user_id, f"Ошибка при генерации: {result['error']}")
+                await answer_generation.edit_text(
+                    "Какая-то ошибка\nПопробуйте еще раз\nТокены не списаны",
+                    reply_markup=inline.generate_congrat_btn()
+                    )
+                return
+            prompt = result["prompt"]
+            response = result["response"]
+            session_id = result["session_id"]
+            data_base.log_generation(callback.from_user.id, prompt, response, session_id, "gpt-4.1")
+
         data_base.write_off_a_token(callback.from_user.id)
         await answer_generation.edit_text(response, reply_markup=inline.regenerate_btn(session_id))
         log_action(user_id, f"Получил поздравление {session_id}")

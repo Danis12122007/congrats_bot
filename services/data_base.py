@@ -194,10 +194,10 @@ def get_monthly_stat(cur, date: datetime.date) -> dict:
 
 
 @db_operation
-def log_generation(cur, user_id: int, prompt: str, response: str, session_id: str) -> None:
+def log_generation(cur, user_id: int, prompt: str, response: str, session_id: str, model: str) -> None:
     cur.execute("""
-                INSERT INTO generations (user_id, prompt, response, created_at, session_id)
-                VALUES (%s, %s, %s, NOW(), %s);""", (user_id, prompt, response, session_id))
+                INSERT INTO generations (user_id, prompt, response, created_at, session_id, model)
+                VALUES (%s, %s, %s, NOW(), %s, %s);""", (user_id, prompt, response, session_id, model))
     conn.commit()
 
 

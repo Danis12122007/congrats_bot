@@ -199,6 +199,7 @@ async def awake_inactive_users(message: types.Message):
 @router.message(F.text)
 async def recipient_name(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
+    user_info = data_base.get_info(user_id)
     message_text = message.text
     if "<script>" in message_text or any(x in message_text for x in ["<", ">", "{", "}"]):
         await message.answer("Пожалуйста, не используйте подозрительные символы.")
@@ -228,18 +229,34 @@ async def recipient_name(message: types.Message, state: FSMContext):
         await state.update_data(reciever_name=message.text)
         congrat_data = await state.get_data()
         print(f"{message.from_user.id}: {congrat_data}")
-        result = AI_API.generate_congrat(congrat_data)
-        if result["status"] == "error":
-            log_action(user_id, f"Ошибка при генерации: {result['error']}")
-            await answer_generation.edit_text(
-                "Какая-то ошибка\nПопробуйте еще раз\nТокены не списаны",
-                reply_markup=inline.generate_congrat_btn()
-                )
-            return
-        prompt = result["prompt"]
-        response = result["response"]
-        session_id = result["session_id"]
-        data_base.log_generation(user_id, prompt, response, session_id)
+
+        if user_info["sub_type"] == "free_sub":
+            result = AI_API.generate_congrat_gpt_3_5(congrat_data)
+            if result["status"] == "error":
+                log_action(user_id, f"Ошибка при генерации: {result['error']}")
+                await answer_generation.edit_text(
+                    "Какая-то ошибка\nПопробуйте еще раз\nТокены не списаны",
+                    reply_markup=inline.generate_congrat_btn()
+                    )
+                return
+            prompt = result["prompt"]
+            response = result["response"]
+            session_id = result["session_id"]
+            data_base.log_generation(user_id, prompt, response, session_id, "gpt-3.5")
+        else:
+            result = AI_API.generate_congrat_gpt_4_1(congrat_data)
+            if result["status"] == "error":
+                log_action(user_id, f"Ошибка при генерации: {result['error']}")
+                await answer_generation.edit_text(
+                    "Какая-то ошибка\nПопробуйте еще раз\nТокены не списаны",
+                    reply_markup=inline.generate_congrat_btn()
+                    )
+                return
+            prompt = result["prompt"]
+            response = result["response"]
+            session_id = result["session_id"]
+            data_base.log_generation(user_id, prompt, response, session_id, "gpt-4.1")
+
         data_base.write_off_a_token(user_id)
         await answer_generation.edit_text(response, reply_markup=inline.regenerate_btn(session_id))
         log_action(user_id, f"Получил поздравление {session_id}")
