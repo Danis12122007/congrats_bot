@@ -116,19 +116,25 @@ def generate_congrat_gpt_3_5(data: dict | None = None, prompt: str | None = None
             }
 
     # Сам запрос
-    response = client.chat.completions.create(
-        model="openai/gpt-3.5-turbo",  # можно заменить на другую модель
-        messages=[
-            {
-                "role": "system",
-                "content": (instruction)
-            },
-            {
-                "role": "user",
-                "content": (prompt)
-            }
-        ]
-    )
+    try:
+        response = client.chat.completions.create(
+            model="openai/gpt-3.5-turbo",  # можно заменить на другую модель
+            messages=[
+                {
+                    "role": "system",
+                    "content": (instruction)
+                },
+                {
+                    "role": "user",
+                    "content": (prompt)
+                }
+            ]
+        )
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": e
+        }
 
     session_id = str(uuid.uuid4())
     return {
@@ -192,19 +198,25 @@ def generate_congrat_gpt_4_1(data: dict | None = None, prompt: str | None = None
             }
 
     # Сам запрос
-    response = client.chat.completions.create(
-        model="openai/gpt-4.1",  # можно заменить на другую модель
-        messages=[
-            {
-                "role": "system",
-                "content": (instruction)
-            },
-            {
-                "role": "user",
-                "content": (prompt)
-            }
-        ]
-    )
+    try:
+        response = client.chat.completions.create(
+            model="openai/gpt-4.1",  # можно заменить на другую модель
+            messages=[
+                {
+                    "role": "system",
+                    "content": (instruction)
+                },
+                {
+                    "role": "user",
+                    "content": (prompt)
+                }
+            ]
+        )
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": e
+        }
 
     session_id = str(uuid.uuid4())
     return {

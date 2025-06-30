@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import json
+from time import sleep
 from aiogram import Router, types, F
 from keyboards import inline
 from aiogram.fsm.context import FSMContext
@@ -170,6 +171,59 @@ async def generate_another(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
+async def gen_congrat(user_info, prompt, user_id):
+    if user_info["sub_type"] == "free_sub":
+        model = "gpt-3.5"
+        result = AI_API.generate_congrat_gpt_3_5(prompt=prompt, regenerate=True)
+        if result["status"] == "error":
+            if "unsupported_country_region_territory" in str(result["error"]):
+                log_action(user_id, f"Ошибка при генерации: {result['error']}")
+                return {
+                    "status": "error",
+                    "error": "unsupported_country_region_territory"
+                }
+            else:
+                log_action(user_id, f"Ошибка при генерации: {result['error']}")
+                return {
+                    "status": "error",
+                    "error": ""
+                }
+        response = result["response"]
+        session_id = result["session_id"]
+        return {
+            "status": "ok",
+            "response": response,
+            "prompt": prompt,
+            "session_id": session_id,
+            "model": model
+        }
+    else:
+        model = "gpt-4.1"
+        result = AI_API.generate_congrat_gpt_4_1(prompt=prompt, regenerate=True)
+        if result["status"] == "error":
+            if "unsupported_country_region_territory" in str(result["error"]):
+                log_action(user_id, f"Ошибка при генерации: {result['error']}")
+                return {
+                    "status": "error",
+                    "error": "unsupported_country_region_territory"
+                }
+            else:
+                log_action(user_id, f"Ошибка при генерации: {result['error']}")
+                return {
+                    "status": "error",
+                    "error": ""
+                }
+        response = result["response"]
+        session_id = result["session_id"]
+        return {
+            "status": "ok",
+            "response": response,
+            "prompt": prompt,
+            "session_id": session_id,
+            "model": model
+        }
+
+
 @router.callback_query(F.data.contains("regenerate_current:"))
 async def regenerate_current(callback: types.CallbackQuery, state: FSMContext):
     user_id = callback.from_user.id
@@ -196,37 +250,32 @@ async def regenerate_current(callback: types.CallbackQuery, state: FSMContext):
         session_id = callback.data.split(":", 1)[1]
         answer_generation = await callback.message.edit_text("Генерация...")
         prompt = data_base.get_prompt_by_session_id(session_id)
-        if user_info["sub_type"] == "free_sub":
-            result = AI_API.generate_congrat_gpt_3_5(prompt=prompt, regenerate=True)
-            if result["status"] == "error":
-                log_action(user_id, f"Ошибка при генерации: {result['error']}")
-                await answer_generation.edit_text(
-                    "Какая-то ошибка\nПопробуйте еще раз\nТокены не списаны",
-                    reply_markup=inline.generate_congrat_btn()
-                    )
-                return
-            prompt = result["prompt"]
-            response = result["response"]
-            session_id = result["session_id"]
-            data_base.log_generation(callback.from_user.id, prompt, response, session_id, "gpt-3.5")
-        else:
-            result = AI_API.generate_congrat_gpt_4_1(prompt=prompt, regenerate=True)
-            if result["status"] == "error":
-                log_action(user_id, f"Ошибка при генерации: {result['error']}")
-                await answer_generation.edit_text(
-                    "Какая-то ошибка\nПопробуйте еще раз\nТокены не списаны",
-                    reply_markup=inline.generate_congrat_btn()
-                    )
-                return
-            prompt = result["prompt"]
-            response = result["response"]
-            session_id = result["session_id"]
-            data_base.log_generation(callback.from_user.id, prompt, response, session_id, "gpt-4.1")
+        for i in range(5):
+            response = await gen_congrat(user_info, prompt, user_id)
+            if response["status"] == "error":
+                if response["error"] == "unsupported_country_region_territory":
+                    if i == 4:
+                        await answer_generation.edit_text("Ошибка при генерации. Мы уже исправляем")
+                        return
+                    else:
+                        sleep(5)
+                else:
+                    await answer_generation.edit_text("Ошибка при генерации. Мы уже исправляем")
+                    return
+            else:
+                break
 
-        data_base.write_off_a_token(callback.from_user.id)
-        await answer_generation.edit_text(response, reply_markup=inline.regenerate_btn_not_fav(session_id))
+        data_base.log_generation(
+            user_id,
+            prompt,
+            response["response"],
+            response["session_id"],
+            response["model"])
+
+        data_base.write_off_a_token(user_id)
+        await answer_generation.edit_text(response["response"], reply_markup=inline.regenerate_btn_not_fav(session_id))
         log_action(user_id, f"Получил поздравление {session_id}")
-        data_base.set_last_request_time(callback.from_user.id)
+        data_base.set_last_request_time(user_id)
         gen_count = data_base.send_mess_after_first_second_gen(user_id)
         print(f"gen_count:{gen_count}")
         if gen_count == '1':
