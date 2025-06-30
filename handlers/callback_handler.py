@@ -394,7 +394,13 @@ async def prev_mess(callback: types.CallbackQuery):
     if len(fav_messages) == 1:
         await callback.message.edit_text(
             text=fav_messages[0][1],
-            reply_markup=inline.fav_mess_nav_btns(len(fav_messages), new_cur_mess, fav_messages[0][0], first=True, last=True)
+            reply_markup=inline.fav_mess_nav_btns(
+                len(fav_messages),
+                new_cur_mess,
+                fav_messages[0][0],
+                first=True,
+                last=True
+            )
         )
     else:
         if new_cur_mess == 0:
@@ -413,7 +419,6 @@ async def prev_mess(callback: types.CallbackQuery):
                 reply_markup=inline.fav_mess_nav_btns(len(fav_messages), new_cur_mess, fav_messages[new_cur_mess][0])
             )
     await callback.answer()
-
 
 
 @router.callback_query(F.data.contains("next_mess:"))
