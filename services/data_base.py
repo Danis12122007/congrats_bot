@@ -329,6 +329,37 @@ def send_mess_after_first_second_gen(cur, user_id):
         return None
 
 
+@db_operation
+def add_favourite(cur, session_id):
+    cur.execute("""
+UPDATE generations
+SET favourite=true
+WHERE session_id=%s;
+""", (session_id,))
+    conn.commit()
+
+
+@db_operation
+def delete_fovourite(cur, session_id):
+    cur.execute("""
+UPDATE generations
+SET favourite=false
+WHERE session_id=%s;
+""", (session_id,))
+    conn.commit()
+
+
+@db_operation
+def get_favourite(cur, user_id):
+    cur.execute("""
+SELECT response FROM generations
+WHERE user_id=%s AND
+favourite=true
+""", (user_id,))
+
+    return cur.fetchall()
+
+
 if __name__ == '__main__':
     connect_db()
     close_db()

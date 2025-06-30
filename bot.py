@@ -32,6 +32,9 @@ async def set_commands(bot: Bot):
             command="/information",
             description="Личный кабинет"),
         BotCommand(
+            command="/favourite",
+            description="Избранные поздравления"),
+        BotCommand(
             command="/subscription",
             description="Купить подписку"),
         BotCommand(

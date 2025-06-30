@@ -224,7 +224,7 @@ async def regenerate_current(callback: types.CallbackQuery, state: FSMContext):
             data_base.log_generation(callback.from_user.id, prompt, response, session_id, "gpt-4.1")
 
         data_base.write_off_a_token(callback.from_user.id)
-        await answer_generation.edit_text(response, reply_markup=inline.regenerate_btn(session_id))
+        await answer_generation.edit_text(response, reply_markup=inline.regenerate_btn_not_fav(session_id))
         log_action(user_id, f"Получил поздравление {session_id}")
         data_base.set_last_request_time(callback.from_user.id)
         gen_count = data_base.send_mess_after_first_second_gen(user_id)
@@ -350,6 +350,109 @@ async def congrat_style(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.answer(
                             "Выберите имя получателя('-' - не указывать)"
     )
+
+
+@router.callback_query(F.data.contains("add_favourite:"))
+async def add_favourite(callback: types.CallbackQuery):
+    user_id = callback.from_user.id
+    log_action(user_id, "callback:add_fovourite")
+    print("add")
+
+    session_id = callback.data.split(":", 1)[1]
+    data_base.add_favourite(session_id)
+    await callback.message.edit_reply_markup(reply_markup=inline.regenerate_btn_fav(session_id))
+    await callback.answer()
+
+
+@router.callback_query(F.data.contains("delete_favourite:"))
+async def delete_favourite(callback: types.CallbackQuery):
+    print('delete')
+    user_id = callback.from_user.id
+    log_action(user_id, "callback:delete_fovourite")
+
+    session_id = callback.data.split(":", 1)[1]
+    data_base.delete_fovourite(session_id)
+    await callback.message.edit_reply_markup(reply_markup=inline.regenerate_btn_not_fav(session_id))
+    await callback.answer()
+
+
+@router.callback_query(F.data.contains("prev_mess:"))
+async def prev_mess(callback: types.CallbackQuery):
+    print("prev")
+    user_id = callback.from_user.id
+    cur_mess = int(callback.data.split(":", 1)[1])
+
+    fav_messages = data_base.get_favourite(user_id)
+    new_cur_mess = cur_mess - 1
+    print(new_cur_mess)
+    print(len(fav_messages))
+    if fav_messages == []:
+        await callback.message.edit_text(
+            text="У вас нет избранных поздравлений"
+        )
+        return
+    if len(fav_messages) == 1:
+        await callback.message.edit_text(
+            text=fav_messages[0][0],
+            reply_markup=inline.fav_mess_nav_btns(len(fav_messages), new_cur_mess, first=True, last=True)
+        )
+    else:
+        if new_cur_mess == 0:
+            await callback.message.edit_text(
+                text=fav_messages[0][0],
+                reply_markup=inline.fav_mess_nav_btns(len(fav_messages), new_cur_mess, first=True)
+            )
+        elif new_cur_mess == len(fav_messages) - 1:
+            await callback.message.edit_text(
+                text=fav_messages[-1][0],
+                reply_markup=inline.fav_mess_nav_btns(len(fav_messages), new_cur_mess, last=True)
+            )
+        else:
+            await callback.message.edit_text(
+                text=fav_messages[new_cur_mess][0],
+                reply_markup=inline.fav_mess_nav_btns(len(fav_messages), new_cur_mess)
+            )
+    await callback.answer()
+
+
+
+@router.callback_query(F.data.contains("next_mess:"))
+async def next_mess(callback: types.CallbackQuery):
+    print("next")
+    user_id = callback.from_user.id
+    cur_mess = int(callback.data.split(":", 1)[1])
+
+    fav_messages = data_base.get_favourite(user_id)
+    new_cur_mess = cur_mess + 1
+    print(new_cur_mess)
+    print(len(fav_messages))
+    if not fav_messages:
+        await callback.message.edit_text(
+            text="У вас нет избранных поздравлений"
+        )
+        return
+    if len(fav_messages) == 1:
+        await callback.message.edit_text(
+            text=fav_messages[0][0],
+            reply_markup=inline.fav_mess_nav_btns(1, 0, first=True, last=True)
+        )
+    else:
+        if new_cur_mess == 0:
+            await callback.message.edit_text(
+                text=fav_messages[0][0],
+                reply_markup=inline.fav_mess_nav_btns(len(fav_messages), new_cur_mess, first=True)
+            )
+        elif new_cur_mess == len(fav_messages) - 1:
+            await callback.message.edit_text(
+                text=fav_messages[-1][0],
+                reply_markup=inline.fav_mess_nav_btns(len(fav_messages), new_cur_mess, last=True)
+            )
+        else:
+            await callback.message.edit_text(
+                text=fav_messages[new_cur_mess][0],
+                reply_markup=inline.fav_mess_nav_btns(len(fav_messages), new_cur_mess)
+            )
+    await callback.answer()
 
 
 @router.callback_query(F.data == 'see_sub_plans')

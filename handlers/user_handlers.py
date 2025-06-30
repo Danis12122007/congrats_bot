@@ -196,6 +196,31 @@ async def awake_inactive_users(message: types.Message):
     await promotions.broadcast_message(message.bot, users, text, inline.generate_congrat_btn)
 
 
+@router.message(Command("favourite"))
+async def get_favourite(message: types.Message):
+    print("fav")
+    user_id = message.from_user.id
+    log_action(user_id, "/favourite")
+
+    fav_messages = data_base.get_favourite(user_id)
+    print(fav_messages)
+    if fav_messages == []:
+        await message.answer(
+            text="У вас нет избранных поздравлений"
+        )
+        return
+    if len(fav_messages) == 1:
+        await message.answer(
+            text=fav_messages[0][0],
+            reply_markup=inline.fav_mess_nav_btns(len(fav_messages), 0, first=True, last=True)
+        )
+    else:
+        await message.answer(
+            text=fav_messages[0][0],
+            reply_markup=inline.fav_mess_nav_btns(len(fav_messages), 0, first=True)
+        )
+
+
 @router.message(F.text)
 async def recipient_name(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
@@ -258,7 +283,7 @@ async def recipient_name(message: types.Message, state: FSMContext):
             data_base.log_generation(user_id, prompt, response, session_id, "gpt-4.1")
 
         data_base.write_off_a_token(user_id)
-        await answer_generation.edit_text(response, reply_markup=inline.regenerate_btn(session_id))
+        await answer_generation.edit_text(response, reply_markup=inline.regenerate_btn_not_fav(session_id))
         log_action(user_id, f"Получил поздравление {session_id}")
         data_base.set_last_request_time(user_id)
         gen_count = data_base.send_mess_after_first_second_gen(user_id)

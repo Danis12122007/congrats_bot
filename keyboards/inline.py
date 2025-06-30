@@ -140,7 +140,7 @@ def congrat_style_btn():
     )
 
 
-def regenerate_btn(session_id: str):
+def regenerate_btn_not_fav(session_id: str):
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(
@@ -148,6 +148,82 @@ def regenerate_btn(session_id: str):
                 callback_data=f"regenerate_current:{session_id}")],
             [InlineKeyboardButton(
                 text="Сгенерировать другое",
-                callback_data="generate_another")]
+                callback_data="generate_another")],
+            [InlineKeyboardButton(
+                text="⭐ Сохранить поздравление в избранные",
+                callback_data=f"add_favourite:{session_id}")]
         ]
     )
+
+
+def regenerate_btn_fav(session_id: str):
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(
+                text="Сгенерировать еще раз",
+                callback_data=f"regenerate_current:{session_id}")],
+            [InlineKeyboardButton(
+                text="Сгенерировать другое",
+                callback_data="generate_another")],
+            [InlineKeyboardButton(
+                text="❌ Удалить поздравление из избранных",
+                callback_data=f"delete_favourite:{session_id}")]
+        ]
+    )
+
+
+def fav_mess_nav_btns(
+        total_amount: int,
+        cur_mess: int,
+        last: bool = False,
+        first: bool = False):
+    if first and last:
+        return InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(
+                    text=f"{cur_mess + 1}/{total_amount}",
+                    callback_data="none")]
+            ]
+        )
+    elif first:
+        return InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text=f"{cur_mess + 1}/{total_amount}",
+                        callback_data="none"),
+                    InlineKeyboardButton(
+                        text=">>",
+                        callback_data=f"next_mess:{cur_mess}")
+                ]
+            ]
+        )
+    if last:
+        return InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text="<<",
+                        callback_data=f"prev_mess:{cur_mess}"),
+                    InlineKeyboardButton(
+                        text=f"{cur_mess + 1}/{total_amount}",
+                        callback_data="none")
+                ]
+            ]
+        )
+    else:
+        return InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text="<<",
+                        callback_data=f"prev_mess:{cur_mess}"),
+                    InlineKeyboardButton(
+                        text=f"{cur_mess + 1}/{total_amount}",
+                        callback_data="none"),
+                    InlineKeyboardButton(
+                        text=">>",
+                        callback_data=f"next_mess:{cur_mess}")
+                ]
+            ]
+        )
