@@ -175,6 +175,7 @@ def regenerate_btn_fav(session_id: str):
 def fav_mess_nav_btns(
         total_amount: int,
         cur_mess: int,
+        session_id: str,
         last: bool = False,
         first: bool = False):
     if first and last:
@@ -182,7 +183,10 @@ def fav_mess_nav_btns(
             inline_keyboard=[
                 [InlineKeyboardButton(
                     text=f"{cur_mess + 1}/{total_amount}",
-                    callback_data="none")]
+                    callback_data="none")],
+                [InlineKeyboardButton(
+                    text="❌ Удалить поздравление из избранных",
+                    callback_data=f"del_fav:{session_id},{cur_mess}")]
             ]
         )
     elif first:
@@ -195,7 +199,10 @@ def fav_mess_nav_btns(
                     InlineKeyboardButton(
                         text=">>",
                         callback_data=f"next_mess:{cur_mess}")
-                ]
+                ],
+                [InlineKeyboardButton(
+                    text="❌ Удалить поздравление из избранных",
+                    callback_data=f"del_fav:{session_id},{cur_mess}")]
             ]
         )
     if last:
@@ -208,7 +215,10 @@ def fav_mess_nav_btns(
                     InlineKeyboardButton(
                         text=f"{cur_mess + 1}/{total_amount}",
                         callback_data="none")
-                ]
+                ],
+                [InlineKeyboardButton(
+                    text="❌ Удалить поздравление из избранных",
+                    callback_data=f"del_fav:{session_id},{cur_mess}")]
             ]
         )
     else:
@@ -224,6 +234,9 @@ def fav_mess_nav_btns(
                     InlineKeyboardButton(
                         text=">>",
                         callback_data=f"next_mess:{cur_mess}")
-                ]
+                ],
+                [InlineKeyboardButton(
+                    text="❌ Удалить поздравление из избранных",
+                    callback_data=f"del_fav:{session_id},{cur_mess}")]
             ]
         )

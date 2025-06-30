@@ -211,13 +211,13 @@ async def get_favourite(message: types.Message):
         return
     if len(fav_messages) == 1:
         await message.answer(
-            text=fav_messages[0][0],
-            reply_markup=inline.fav_mess_nav_btns(len(fav_messages), 0, first=True, last=True)
+            text=fav_messages[0][1],
+            reply_markup=inline.fav_mess_nav_btns(len(fav_messages), 0, fav_messages[0][0], first=True, last=True)
         )
     else:
         await message.answer(
-            text=fav_messages[0][0],
-            reply_markup=inline.fav_mess_nav_btns(len(fav_messages), 0, first=True)
+            text=fav_messages[0][1],
+            reply_markup=inline.fav_mess_nav_btns(len(fav_messages), 0, fav_messages[0][0], first=True)
         )
 
 

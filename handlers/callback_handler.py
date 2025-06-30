@@ -368,10 +368,10 @@ async def add_favourite(callback: types.CallbackQuery):
 async def delete_favourite(callback: types.CallbackQuery):
     print('delete')
     user_id = callback.from_user.id
-    log_action(user_id, "callback:delete_fovourite")
+    log_action(user_id, "callback:delete_favourite")
 
     session_id = callback.data.split(":", 1)[1]
-    data_base.delete_fovourite(session_id)
+    data_base.delete_favourite(session_id)
     await callback.message.edit_reply_markup(reply_markup=inline.regenerate_btn_not_fav(session_id))
     await callback.answer()
 
@@ -393,24 +393,24 @@ async def prev_mess(callback: types.CallbackQuery):
         return
     if len(fav_messages) == 1:
         await callback.message.edit_text(
-            text=fav_messages[0][0],
-            reply_markup=inline.fav_mess_nav_btns(len(fav_messages), new_cur_mess, first=True, last=True)
+            text=fav_messages[0][1],
+            reply_markup=inline.fav_mess_nav_btns(len(fav_messages), new_cur_mess, fav_messages[0][0], first=True, last=True)
         )
     else:
         if new_cur_mess == 0:
             await callback.message.edit_text(
-                text=fav_messages[0][0],
-                reply_markup=inline.fav_mess_nav_btns(len(fav_messages), new_cur_mess, first=True)
+                text=fav_messages[0][1],
+                reply_markup=inline.fav_mess_nav_btns(len(fav_messages), new_cur_mess, fav_messages[0][0], first=True)
             )
         elif new_cur_mess == len(fav_messages) - 1:
             await callback.message.edit_text(
-                text=fav_messages[-1][0],
-                reply_markup=inline.fav_mess_nav_btns(len(fav_messages), new_cur_mess, last=True)
+                text=fav_messages[-1][1],
+                reply_markup=inline.fav_mess_nav_btns(len(fav_messages), new_cur_mess, fav_messages[-1][0], last=True)
             )
         else:
             await callback.message.edit_text(
-                text=fav_messages[new_cur_mess][0],
-                reply_markup=inline.fav_mess_nav_btns(len(fav_messages), new_cur_mess)
+                text=fav_messages[new_cur_mess][1],
+                reply_markup=inline.fav_mess_nav_btns(len(fav_messages), new_cur_mess, fav_messages[new_cur_mess][0])
             )
     await callback.answer()
 
@@ -433,24 +433,63 @@ async def next_mess(callback: types.CallbackQuery):
         return
     if len(fav_messages) == 1:
         await callback.message.edit_text(
-            text=fav_messages[0][0],
-            reply_markup=inline.fav_mess_nav_btns(1, 0, first=True, last=True)
+            text=fav_messages[0][1],
+            reply_markup=inline.fav_mess_nav_btns(1, 0, fav_messages[0][0], first=True, last=True)
         )
     else:
         if new_cur_mess == 0:
             await callback.message.edit_text(
-                text=fav_messages[0][0],
-                reply_markup=inline.fav_mess_nav_btns(len(fav_messages), new_cur_mess, first=True)
+                text=fav_messages[0][1],
+                reply_markup=inline.fav_mess_nav_btns(len(fav_messages), new_cur_mess, fav_messages[0][0], first=True)
             )
         elif new_cur_mess == len(fav_messages) - 1:
             await callback.message.edit_text(
-                text=fav_messages[-1][0],
-                reply_markup=inline.fav_mess_nav_btns(len(fav_messages), new_cur_mess, last=True)
+                text=fav_messages[-1][1],
+                reply_markup=inline.fav_mess_nav_btns(len(fav_messages), new_cur_mess, fav_messages[-1][0], last=True)
             )
         else:
             await callback.message.edit_text(
-                text=fav_messages[new_cur_mess][0],
-                reply_markup=inline.fav_mess_nav_btns(len(fav_messages), new_cur_mess)
+                text=fav_messages[new_cur_mess][1],
+                reply_markup=inline.fav_mess_nav_btns(len(fav_messages), new_cur_mess, fav_messages[new_cur_mess][0])
+            )
+    await callback.answer()
+
+
+@router.callback_query(F.data.contains("del_fav:"))
+async def del_fav(callback: types.CallbackQuery):
+    print("del_fav")
+    user_id = callback.from_user.id
+    session_id = callback.data.split(":", 1)[1].split(",")[0]
+    cur_mess = callback.data.split(":", 1)[1].split(",")[1]
+
+    fav_messages = data_base.get_favourite(user_id)
+    data_base.delete_favourite(session_id)
+    fav_messages = data_base.get_favourite(user_id)
+    if not fav_messages:
+        await callback.message.edit_text(
+            text="У вас нет избранных поздравлений"
+        )
+        return
+    if len(fav_messages) == 1:
+        await callback.message.edit_text(
+            text=fav_messages[0][1],
+            reply_markup=inline.fav_mess_nav_btns(1, 0, fav_messages[0][0], first=True, last=True)
+        )
+    else:
+        if cur_mess == 0:
+            await callback.message.edit_text(
+                text=fav_messages[0][1],
+                reply_markup=inline.fav_mess_nav_btns(len(fav_messages), cur_mess, fav_messages[0][0], first=True)
+            )
+        elif cur_mess == len(fav_messages) - 1:
+            await callback.message.edit_text(
+                text=fav_messages[-1][1],
+                reply_markup=inline.fav_mess_nav_btns(len(fav_messages), cur_mess, fav_messages[0][0], last=True)
+            )
+        else:
+            await callback.message.edit_text(
+                text=fav_messages[cur_mess][1],
+                reply_markup=inline.fav_mess_nav_btns(len(fav_messages), cur_mess, fav_messages[cur_mess][0])
             )
     await callback.answer()
 

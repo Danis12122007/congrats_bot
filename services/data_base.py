@@ -340,7 +340,7 @@ WHERE session_id=%s;
 
 
 @db_operation
-def delete_fovourite(cur, session_id):
+def delete_favourite(cur, session_id):
     cur.execute("""
 UPDATE generations
 SET favourite=false
@@ -352,7 +352,7 @@ WHERE session_id=%s;
 @db_operation
 def get_favourite(cur, user_id):
     cur.execute("""
-SELECT response FROM generations
+SELECT session_id, response FROM generations
 WHERE user_id=%s AND
 favourite=true
 """, (user_id,))
