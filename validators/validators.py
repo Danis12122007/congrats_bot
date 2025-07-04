@@ -37,3 +37,7 @@ def user_is_admin(user_id: int) -> bool:
         return True
     else:
         return False
+
+
+def get_admins_ids():
+    return ADMIN_IDS

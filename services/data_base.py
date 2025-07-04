@@ -87,11 +87,11 @@ def get_info(cur, user_id: int) -> dict:
 
 
 @db_operation
-def reg_user(cur, user_id: int) -> None:
+def reg_user(cur, user_id: int, user_from: str | None = None) -> None:
 
     if not check_user(user_id=user_id):
         log_action(user_id, "!!!Новый пользователь!!!")
-        cur.execute("INSERT INTO users (user_id) VALUES (%s) ON CONFLICT (user_id) DO NOTHING;", (user_id,))
+        cur.execute("INSERT INTO users (user_id, user_from) VALUES (%s, %s) ON CONFLICT DO NOTHING;", (user_id, user_from))
         conn.commit()
 
         cancel_subscription(user_id)
@@ -134,62 +134,104 @@ def check_user(cur, user_id: int) -> bool:
 
 
 @db_operation
-def get_daily_stat(cur, date: datetime.date) -> int:
-    cur.execute("""
+def get_daily_stat(cur, date: datetime.date, not_include: list | None = None) -> dict:
+    if not not_include:
+        not_include = [0, 1, 2, 3]
+    placeholders = ','.join(['%s'] * len(not_include))
+    params_base = [date]
+    params_all = params_base + not_include
+    print(params_all)
+    print(f"""
                 SELECT COUNT(*)
                 FROM generations
-                WHERE DATE(created_at) = %s;
-                """, (date,))
+                WHERE DATE(created_at) = %s AND
+                user_id NOT IN ({placeholders});
+                """)
+    print(params_all)
+    cur.execute(f"""
+                SELECT COUNT(*)
+                FROM generations
+                WHERE DATE(created_at) = %s AND
+                user_id NOT IN ({placeholders});
+                """, params_all)
     gen_count = int(cur.fetchone()[0])
-    cur.execute("""
+    cur.execute(f"""
                 SELECT COUNT(DISTINCT user_id)
                 FROM generations
-                WHERE DATE(created_at) = %s;
-                """, (date,))
+                WHERE DATE(created_at) = %s AND
+                user_id NOT IN ({placeholders});
+                """, params_all)
     users_gen_count = int(cur.fetchone()[0])
-    cur.execute("""
+    cur.execute(f"""
                 SELECT COUNT(DISTINCT user_id)
                 FROM users
-                WHERE DATE(reg_date) = %s;
-                """, (date,))
+                WHERE DATE(reg_date) = %s AND
+                user_id NOT IN ({placeholders});
+                """, params_all)
     newcomers_count = int(cur.fetchone()[0])
+    cur.execute(f"""
+                SELECT COUNT(DISTINCT user_id)
+                FROM users
+                WHERE DATE(reg_date) = %s AND
+                user_from = 'reels' AND
+                user_id NOT IN ({placeholders});
+                """, params_all)
+    reels_newcomers_count = int(cur.fetchone()[0])
     return {
         "gen_count": gen_count,
         "users_gen_count": users_gen_count,
-        "newcomers_count": newcomers_count
+        "newcomers_count": newcomers_count,
+        "reels_newcomers_count": reels_newcomers_count
     }
 
 
 @db_operation
-def get_monthly_stat(cur, date: datetime.date) -> dict:
-    year = date.year
-    month = date.month
-    cur.execute("""
+def get_monthly_stat(cur, date: datetime.date, not_include: list | None = None) -> dict:
+    if not not_include:
+        not_include = [0, 1, 2, 3]
+    placeholders = ','.join(['%s'] * len(not_include))
+    params_base = [date.year, date.month]
+    params_all = params_base + not_include
+    print(params_all)
+    cur.execute(f"""
                 SELECT COUNT(*)
                 FROM generations
                 WHERE EXTRACT(YEAR FROM created_at) = %s
-                AND EXTRACT(MONTH FROM created_at) = %s;
-                """, (year, month))
+                AND EXTRACT(MONTH FROM created_at) = %s AND
+                user_id NOT IN ({placeholders});
+                """, params_all)
     gen_count = int(cur.fetchone()[0])
-    cur.execute("""
+    cur.execute(f"""
                 SELECT COUNT(DISTINCT user_id)
                 FROM generations
                 WHERE EXTRACT(YEAR FROM created_at) = %s
-                AND EXTRACT(MONTH FROM created_at) = %s;
-                """, (year, month))
+                AND EXTRACT(MONTH FROM created_at) = %s AND
+                user_id NOT IN ({placeholders});
+                """, params_all)
     users_gen_count = int(cur.fetchone()[0])
-    cur.execute("""
+    cur.execute(f"""
                 SELECT COUNT(DISTINCT user_id)
                 FROM users
                 WHERE EXTRACT(YEAR FROM reg_date) = %s
-                AND EXTRACT(MONTH FROM reg_date) = %s;
-                """, (year, month))
+                AND EXTRACT(MONTH FROM reg_date) = %s AND
+                user_id NOT IN ({placeholders});
+                """, params_all)
     newcomers_count = int(cur.fetchone()[0])
+    cur.execute(f"""
+                SELECT COUNT(DISTINCT user_id)
+                FROM users
+                WHERE EXTRACT(YEAR FROM reg_date) = %s AND
+                EXTRACT(MONTH FROM reg_date) = %s AND
+                user_from = 'reels' AND
+                user_id NOT IN ({placeholders});
+                """, params_all)
+    reels_newcomers_count = int(cur.fetchone()[0])
 
     return {
         "gen_count": gen_count,
         "users_gen_count": users_gen_count,
-        "newcomers_count": newcomers_count
+        "newcomers_count": newcomers_count,
+        "reels_newcomers_count": reels_newcomers_count
     }
 
 

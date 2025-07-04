@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta, timezone
 import json
-from time import sleep
 from aiogram import Router, types, F
 from keyboards import inline
 from aiogram.fsm.context import FSMContext
@@ -258,7 +257,7 @@ async def regenerate_current(callback: types.CallbackQuery, state: FSMContext):
                         await answer_generation.edit_text("Ошибка при генерации. Мы уже исправляем")
                         return
                     else:
-                        sleep(5)
+                        await asyncio.sleep(5)
                 else:
                     await answer_generation.edit_text("Ошибка при генерации. Мы уже исправляем")
                     return

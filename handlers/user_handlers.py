@@ -1,5 +1,4 @@
 import asyncio
-from time import sleep
 from aiogram import F, Router, types
 from aiogram.filters import CommandStart, Command
 from keyboards import inline
@@ -81,8 +80,19 @@ router = Router()
 @router.message(CommandStart())
 async def cmd_start(message: types.Message):
     user_id = message.from_user.id
+    text = message.text
+
+    # Пример: "/start reels" -> разбиваем по пробелу
+    parts = text.split()
+    if len(parts) > 1:
+        match parts[1]:
+            case "reels":
+                user_from = "reels"
+    else:
+        user_from = None
+
     log_action(user_id, "/start")
-    data_base.reg_user(user_id)
+    data_base.reg_user(user_id, user_from)
 
     await message.answer(
         """
@@ -222,6 +232,23 @@ async def get_favourite(message: types.Message):
         )
 
 
+# async def fake_progress(message):
+#     phrases = [
+#         "✍️ Думаем над идеей...",
+#         "💡 Подбираем стиль...",
+#         "📜 Формулируем поздравление...",
+#         "🎁 Заворачиваем в праздничную упаковку...",
+#         "✨ Добавляем немного магии..."
+#     ]
+#     while True:
+#         for phrase in phrases:
+#             try:
+#                 await message.edit_text(phrase)
+#                 await asyncio.sleep(random.uniform(1.2, 2.0))  # рандомная задержка
+#             except Exception:
+#                 return
+
+
 async def gen_congrat(user_info, congrat_data, user_id):
     if user_info["sub_type"] == "free_sub":
         model = "gpt-3.5"
@@ -319,7 +346,7 @@ async def recipient_name(message: types.Message, state: FSMContext):
                         await answer_generation.edit_text("Ошибка при генерации. Мы уже исправляем")
                         return
                     else:
-                        sleep(5)
+                        await asyncio.sleep(5)
                 else:
                     await answer_generation.edit_text("Ошибка при генерации. Мы уже исправляем")
                     return
@@ -393,8 +420,7 @@ async def recipient_name(message: types.Message, state: FSMContext):
                             "Выберите кому будет поздравление",
                             reply_markup=inline.congrat_recipient_role_btn()
         )
-    elif message.text.startswith("/daily_stat") and validators.user_is_admin(message.from_user.id):
-        user_id = message.from_user.id
+    elif message.text.startswith("/daily_stat") and validators.user_is_admin(user_id):
         print(f"{user_id}:{str(message.text)[1:]}")
         await state.clear()
         try:
@@ -411,11 +437,12 @@ async def recipient_name(message: types.Message, state: FSMContext):
             return
         date = date.split("-")
         date = datetime.date(int(date[0]), int(date[1]), int(date[2]))
-        daily_info = data_base.get_daily_stat(date)
+        daily_info = data_base.get_daily_stat(date, validators.get_admins_ids())
         await message.answer((
             f"Количество генераций: {daily_info['gen_count']}\n"
             f"Количество пользователей произведших генерацию: {daily_info['users_gen_count']}\n"
             f"Количество новых пользователей: {daily_info['newcomers_count']}\n"
+            f"Количество новых пользователей из reels: {daily_info['reels_newcomers_count']}\n"
         ))
     elif message.text.startswith("/monthly_stat") and validators.user_is_admin(message.from_user.id):
         user_id = message.from_user.id
@@ -436,11 +463,12 @@ async def recipient_name(message: types.Message, state: FSMContext):
             return
         date = date.split("-")
         date = datetime.date(int(date[0]), int(date[1]), int(date[2]))
-        monthly_info = data_base.get_monthly_stat(date)
+        monthly_info = data_base.get_monthly_stat(date, validators.get_admins_ids())
         await message.answer((
             f"Количество генераций: {monthly_info['gen_count']}\n"
             f"Количество пользователей произведших генерацию: {monthly_info['users_gen_count']}\n"
             f"Количество новых пользователей: {monthly_info['newcomers_count']}\n"
+            f"Количество новых пользователей из reels: {monthly_info['reels_newcomers_count']}\n"
         ))
     elif message.text.startswith("/graph_gens") and validators.user_is_admin(message.from_user.id):
         user_id = message.from_user.id
