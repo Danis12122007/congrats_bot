@@ -207,7 +207,18 @@ async def awake_inactive_users(message: types.Message):
     await promotions.broadcast_message(message.bot, users, text, inline.generate_congrat_btn)
 
 
-@router.message(Command("favourite"))
+@router.message(Command("broadcast"))
+async def broadcast(message: types.Message, state: FSMContext):
+    if not validators.user_is_admin(message.from_user.id):
+        return
+    log_action(message.from_user.id, "/broadcast")
+    data_base.reg_user(message.from_user.id)
+
+    await state.set_state(form_states.Congrat.broadcast)
+    await message.answer("Введите сообщение")
+
+
+@router.message(Command(commands=["favourite", "favourites"]))
 async def get_favourite(message: types.Message):
     print("fav")
     user_id = message.from_user.id
@@ -309,20 +320,20 @@ async def recipient_name(message: types.Message, state: FSMContext):
     user_id = message.from_user.id
     user_info = data_base.get_info(user_id)
     message_text = message.text
-    if "<script>" in message_text or any(x in message_text for x in ["<", ">", "{", "}"]):
+    current_state = await state.get_state()
+    if "<script>" in message_text or any(x in message_text for x in ["<", ">", "{", "}"]) and current_state != 'Congrat:broadcast':
         await message.answer("Пожалуйста, не используйте подозрительные символы.")
         return
-    if len(message_text) > 50:
+    if len(message_text) > 50 and current_state != 'Congrat:broadcast':
+        print(current_state)
         await message.answer("Сообщение слишком длинное(более 50 символов)")
         return
     if len(message_text.strip()) == 0:
         message.answer("Сообщение не может быть пустым")
         return
-    if validators.contains_bad_symbols(message.text):
+    if validators.contains_bad_symbols(message.text) and current_state != 'Congrat:broadcast':
         await message.answer("Пожалуйста, не используйте emoji, HTML-теги или подозрительные символы.")
         return
-
-    current_state = await state.get_state()
 
     if current_state == 'Congrat:reciever_name':
         if not message_text.replace(" ", "").isalpha():
@@ -420,6 +431,29 @@ async def recipient_name(message: types.Message, state: FSMContext):
                             "Выберите кому будет поздравление",
                             reply_markup=inline.congrat_recipient_role_btn()
         )
+    elif current_state == 'Congrat:broadcast':
+        await state.update_data(broadcast=message_text)
+        await state.set_state(form_states.Congrat.confirm_broadcast)
+        await message.answer("Вы действительно хотите отправить сообщение?(Да/Нет)")
+    elif current_state == 'Congrat:confirm_broadcast':
+        if message_text == "Да":
+            users = data_base.get_all_users()
+            data = await state.get_data()
+            print(data)
+            data = data["broadcast"]
+            print(data)
+            result = await promotions.broadcast_message(message.bot, users, data)
+            await message.answer((
+                f"Успешно отправлено: {result['success']}\n"
+                f"Не отправлено: {result['failed']}\n"
+                f"Процент успешной отправки: {round(result['success'] / (result['success'] + result['failed']) * 100, 2)}%"))
+            await state.clear()
+        elif message_text == "Нет":
+            await state.clear()
+            await message.answer("Операция отменена")
+        else:
+            await message.answer("Вы действительно хотите отправить сообщение?(Да/Нет)")
+
     elif message.text.startswith("/daily_stat") and validators.user_is_admin(user_id):
         print(f"{user_id}:{str(message.text)[1:]}")
         await state.clear()

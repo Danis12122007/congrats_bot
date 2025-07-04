@@ -402,6 +402,17 @@ favourite=true
     return cur.fetchall()
 
 
+@db_operation
+def get_all_users(cur):
+    cur.execute("""
+        SELECT user_id
+        FROM users;
+        """)
+
+    return cur.fetchall()
+
+
 if __name__ == '__main__':
     connect_db()
+    print(get_all_users())
     close_db()

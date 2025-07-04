@@ -11,3 +11,5 @@ class Congrat(StatesGroup):
     achieve = State()
     holiday = State()
     anniversary = State()
+    broadcast = State()
+    confirm_broadcast = State()
