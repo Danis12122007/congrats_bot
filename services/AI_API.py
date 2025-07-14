@@ -118,7 +118,7 @@ def generate_congrat_gpt_3_5(data: dict | None = None, prompt: str | None = None
     # Сам запрос
     try:
         response = client.chat.completions.create(
-            model="openai/gpt-3.5-turbo",  # можно заменить на другую модель
+            model="openai/gpt-3.5-turbo-16k",  # можно заменить на другую модель
             messages=[
                 {
                     "role": "system",
@@ -128,7 +128,11 @@ def generate_congrat_gpt_3_5(data: dict | None = None, prompt: str | None = None
                     "role": "user",
                     "content": (prompt)
                 }
-            ]
+            ],
+            extra_headers={
+                "HTTP-Referer": "https://t.me/congrats_6869_bot",
+                "X-Title": "CongratsBot"
+            }
         )
     except Exception as e:
         return {
@@ -210,7 +214,11 @@ def generate_congrat_gpt_4_1(data: dict | None = None, prompt: str | None = None
                     "role": "user",
                     "content": (prompt)
                 }
-            ]
+            ],
+            extra_headers={
+                "HTTP-Referer": "https://t.me/congrats_6869_bot",
+                "X-Title": "CongratsBot"
+            }
         )
     except Exception as e:
         return {
