@@ -42,19 +42,19 @@ def congrat_type_btn():
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(
-                text="С днем рождения",
+                text="🎂 С днем рождения",
                 callback_data="birthday")],
             [InlineKeyboardButton(
-                text="С годовщиной",
+                text="🎁 С годовщиной",
                 callback_data="anniversary")],
             [InlineKeyboardButton(
-                text="С достижением/событием",
+                text="⭐️ С достижением/событием",
                 callback_data="achievement")],
             [InlineKeyboardButton(
-                text="С праздником",
+                text="🗓️ С праздником",
                 callback_data="holiday")],
             [InlineKeyboardButton(
-                text="Личное и душевное",
+                text="❤️ Личное и душевное",
                 callback_data="personal")]
         ]
     )
@@ -64,61 +64,61 @@ def congrat_recipient_role_btn():
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(
-                text="Мама",
+                text="👩 Мама",
                 callback_data="mom")],
             [InlineKeyboardButton(
-                text="Папа",
+                text="👨 Папа",
                 callback_data="dad")],
             [InlineKeyboardButton(
-                text="Бабушка",
+                text="👵 Бабушка",
                 callback_data="grandma")],
             [InlineKeyboardButton(
-                text="Дедушка",
+                text="👴 Дедушка",
                 callback_data="grandpa")],
             [InlineKeyboardButton(
-                text="Сестра",
+                text="🧑 Сестра",
                 callback_data="sister")],
             [InlineKeyboardButton(
-                text="Брат",
+                text="👦 Брат",
                 callback_data="brother")],
             [InlineKeyboardButton(
-                text="Дочь",
+                text="🧒 Дочь",
                 callback_data="daughter")],
             [InlineKeyboardButton(
-                text="Сын",
+                text="👦 Сын",
                 callback_data="son")],
             [InlineKeyboardButton(
-                text="Жена",
+                text="👰‍♀️ Жена",
                 callback_data="wife")],
             [InlineKeyboardButton(
-                text="Муж",
+                text="🤵‍♂️ Муж",
                 callback_data="husband")],
             [InlineKeyboardButton(
-                text="Девушка",
+                text="🙋‍♀️ Девушка",
                 callback_data="girlfriend")],
             [InlineKeyboardButton(
-                text="Парень",
+                text="🙋‍♂️ Парень",
                 callback_data="boyfriend")],
             [InlineKeyboardButton(
-                text="Друг",
+                text="🤝 Друг",
                 callback_data="friend_boy")],
             [InlineKeyboardButton(
-                text="Подруга",
+                text="🤝 Подруга",
                 callback_data="friend_girl")],
             [InlineKeyboardButton(
-                text="Коллега",
+                text="💼 Коллега",
                 callback_data="colleague")],
             [InlineKeyboardButton(
-                text="Начальник",
+                text="🧑‍💼Начальник",
                 callback_data="boss")],
             [InlineKeyboardButton(
-                text="Учитель",
+                text="🧑‍🏫Учитель",
                 callback_data="teacher")],
             [InlineKeyboardButton(
-                text="ИИ",
+                text="🤖 ИИ",
                 callback_data="AI")],
             [InlineKeyboardButton(
-                text="Не указывать",
+                text="🛑 Не указывать",
                 callback_data="unknown")]
         ]
     )
@@ -128,13 +128,13 @@ def congrat_style_btn():
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(
-                text='Тёплое / душевное',
+                text='🌞 Тёплое / душевное',
                 callback_data='spiritual')],
             [InlineKeyboardButton(
-                text='Лёгкое / дружеское',
+                text='😄 Лёгкое / дружеское',
                 callback_data='friendly')],
             [InlineKeyboardButton(
-                text='Официальное / деловое',
+                text='📎 Официальное / деловое',
                 callback_data='official')]
         ]
     )
