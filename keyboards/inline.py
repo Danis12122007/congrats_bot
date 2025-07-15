@@ -65,56 +65,56 @@ def congrat_recipient_role_btn():
         inline_keyboard=[
             [InlineKeyboardButton(
                 text="👩 Мама",
-                callback_data="mom")],
-            [InlineKeyboardButton(
+                callback_data="mom"),
+            InlineKeyboardButton(
                 text="👨 Папа",
                 callback_data="dad")],
             [InlineKeyboardButton(
                 text="👵 Бабушка",
-                callback_data="grandma")],
-            [InlineKeyboardButton(
+                callback_data="grandma"),
+            InlineKeyboardButton(
                 text="👴 Дедушка",
                 callback_data="grandpa")],
             [InlineKeyboardButton(
                 text="🧑 Сестра",
-                callback_data="sister")],
-            [InlineKeyboardButton(
+                callback_data="sister"),
+            InlineKeyboardButton(
                 text="👦 Брат",
                 callback_data="brother")],
             [InlineKeyboardButton(
                 text="🧒 Дочь",
-                callback_data="daughter")],
-            [InlineKeyboardButton(
+                callback_data="daughter"),
+            InlineKeyboardButton(
                 text="👦 Сын",
                 callback_data="son")],
             [InlineKeyboardButton(
                 text="👰‍♀️ Жена",
-                callback_data="wife")],
-            [InlineKeyboardButton(
+                callback_data="wife"),
+            InlineKeyboardButton(
                 text="🤵‍♂️ Муж",
                 callback_data="husband")],
             [InlineKeyboardButton(
                 text="🙋‍♀️ Девушка",
-                callback_data="girlfriend")],
-            [InlineKeyboardButton(
+                callback_data="girlfriend"),
+            InlineKeyboardButton(
                 text="🙋‍♂️ Парень",
                 callback_data="boyfriend")],
             [InlineKeyboardButton(
                 text="🤝 Друг",
-                callback_data="friend_boy")],
-            [InlineKeyboardButton(
+                callback_data="friend_boy"),
+            InlineKeyboardButton(
                 text="🤝 Подруга",
                 callback_data="friend_girl")],
             [InlineKeyboardButton(
                 text="💼 Коллега",
-                callback_data="colleague")],
-            [InlineKeyboardButton(
+                callback_data="colleague"),
+            InlineKeyboardButton(
                 text="🧑‍💼Начальник",
                 callback_data="boss")],
             [InlineKeyboardButton(
                 text="🧑‍🏫Учитель",
-                callback_data="teacher")],
-            [InlineKeyboardButton(
+                callback_data="teacher"),
+            InlineKeyboardButton(
                 text="🤖 ИИ",
                 callback_data="AI")],
             [InlineKeyboardButton(
