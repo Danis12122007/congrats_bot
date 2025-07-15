@@ -336,7 +336,7 @@ async def recipient_name(message: types.Message, state: FSMContext):
         return
 
     if current_state == 'Congrat:reciever_name':
-        if not message_text.replace(" ", "").isalpha():
+        if not message_text.replace(" ", "").isalpha() and message_text.replace(" ", "") != "-":
             await message.answer("Имя может содержать только буквы.")
             return
         allowing_data = data_base.get_permition_by_last_request_time(message.from_user.id)
