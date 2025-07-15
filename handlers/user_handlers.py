@@ -1,4 +1,5 @@
 import asyncio
+import re
 from aiogram import F, Router, types
 from aiogram.filters import CommandStart, Command
 from keyboards import inline
@@ -336,8 +337,8 @@ async def recipient_name(message: types.Message, state: FSMContext):
         return
 
     if current_state == 'Congrat:reciever_name':
-        if not message_text.replace(" ", "").isalpha() and message_text.replace(" ", "") != "-":
-            await message.answer("Имя может содержать только буквы.")
+        if not validators.is_valid_name(message_text.strip()):
+            await message.answer("Некорректное имя. Допустимы только буквы (рус/лат) и дефис между частями.")
             return
         allowing_data = data_base.get_permition_by_last_request_time(message.from_user.id)
         if allowing_data["status"] == "not allowed" and allowing_data["message"] == "request frequency exceeded":

@@ -32,6 +32,14 @@ def is_valid_date(date_str: str) -> bool:
         return False
 
 
+def is_valid_name(name: str) -> bool:
+    if name == "-":
+        return True
+    PATTERN_NAME = re.compile(r"^[A-Za-zА-Яа-я]+(?:-[A-Za-zА-Яа-я]+)*$")
+    name = name.strip()
+    return bool(PATTERN_NAME.fullmatch(name))
+
+
 def user_is_admin(user_id: int) -> bool:
     if str(user_id) in ADMIN_IDS:
         return True
