@@ -14,3 +14,6 @@ def test_is_valid_name():
     assert is_valid_name("--") == False
     assert is_valid_name("2421") == False
     assert is_valid_name("^*^") == False
+    assert is_valid_name("❤️") == False
+    assert is_valid_name("") == False
+    assert is_valid_name(" ") == False
