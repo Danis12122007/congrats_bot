@@ -1,5 +1,4 @@
 import asyncio
-import re
 from aiogram import F, Router, types
 from aiogram.filters import CommandStart, Command
 from keyboards import inline

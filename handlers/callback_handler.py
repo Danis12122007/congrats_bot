@@ -46,7 +46,11 @@ reciever_role_dict = {
 style_dict = {
     "spiritual": "Душевный",
     "friendly": "Дружеский",
-    "official": "Официальный"
+    "official": "Официальный",
+    "the_lord_of_the_rings": "В стиле Властелина колец",
+    "sponge_bob": "В стиле Губки Боба",
+    "pirate": "В пиратском стиле",
+    "gamer": "В геймерском стиле"
 }
 
 TARIFFS = {
@@ -383,7 +387,11 @@ async def congrat_reciever_role(callback: types.CallbackQuery, state: FSMContext
 @router.callback_query(F.data.in_({
     "spiritual",
     "friendly",
-    "official"
+    "official",
+    "the_lord_of_the_rings",
+    "sponge_bob",
+    "pirate",
+    "gamer",
 }))
 async def congrat_style(callback: types.CallbackQuery, state: FSMContext):
     style = callback.data

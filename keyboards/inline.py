@@ -135,7 +135,19 @@ def congrat_style_btn():
                 callback_data='friendly')],
             [InlineKeyboardButton(
                 text='📎 Официальное / деловое',
-                callback_data='official')]
+                callback_data='official')],
+            [InlineKeyboardButton(
+                text='⚔️ В стиле Властелина колец',
+                callback_data='the_lord_of_the_rings')],
+            [InlineKeyboardButton(
+                text='🍍 В стиле Губки Боба',
+                callback_data='sponge_bob')],
+            [InlineKeyboardButton(
+                text='🏴‍☠️ В пиратском стиле',
+                callback_data='pirate')],
+            [InlineKeyboardButton(
+                text='🎮 В геймерском стиле',
+                callback_data='gamer')]
         ]
     )
 
