@@ -276,8 +276,8 @@ async def regenerate_current(callback: types.CallbackQuery, state: FSMContext):
             response["model"])
 
         data_base.write_off_a_token(user_id)
-        await answer_generation.edit_text(response["response"], reply_markup=inline.regenerate_btn_not_fav(session_id))
-        log_action(user_id, f"Получил поздравление {session_id}")
+        await answer_generation.edit_text(response["response"], reply_markup=inline.regenerate_btn_not_fav(response["session_id"]))
+        log_action(user_id, f"Получил поздравление {response['session_id']}")
         data_base.set_last_request_time(user_id)
         gen_count = data_base.send_mess_after_first_second_gen(user_id)
         print(f"gen_count:{gen_count}")
